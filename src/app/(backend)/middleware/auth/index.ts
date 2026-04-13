@@ -7,9 +7,10 @@ import { ChatErrorType } from '@lobechat/types';
 import { auth } from '@/auth';
 import { getServerDB } from '@/database/core/db-adaptor';
 import { type LobeChatDatabase } from '@/database/type';
-import { LOBE_CHAT_OIDC_AUTH_HEADER } from '@/envs/auth';
+import { LOBE_CHAT_OIDC_AUTH_HEADER, authEnv } from '@/envs/auth';
 import { extractTraceContext, injectActiveTraceHeaders } from '@/libs/observability/traceparent';
 import { validateOIDCJWT } from '@/libs/oidc-provider/jwt';
+import { isPolyUKeycloakEnabled, validateKeycloakJWT } from '@/libs/oidc-provider/keycloak-jwt';
 import { createErrorResponse } from '@/utils/errorResponse';
 
 type RequestOptions = { params: Promise<{ provider?: string }> };
@@ -46,25 +47,45 @@ export const checkAuth =
       });
     }
 
-    let userId: string;
+    let userId: string | undefined;
 
     try {
-      // OIDC authentication (CLI)
-      const oidcAuthorization = req.headers.get(LOBE_CHAT_OIDC_AUTH_HEADER);
-      if (oidcAuthorization) {
-        const oidc = await validateOIDCJWT(oidcAuthorization);
-        userId = oidc.userId;
-      } else {
-        // Better Auth session authentication (web)
-        const session = await auth.api.getSession({
-          headers: req.headers,
-        });
-
-        if (!session?.user?.id) {
-          throw AgentRuntimeError.createError(ChatErrorType.Unauthorized);
+      // PolyU Keycloak JWT authentication (highest priority)
+      // Nginx passes the Keycloak JWT via Authorization header from BFF
+      if (isPolyUKeycloakEnabled()) {
+        const authorization = req.headers.get('Authorization');
+        if (authorization) {
+          const tokenMatch = authorization.match(/^Bearer\s+(.+)$/i);
+          if (tokenMatch) {
+            const token = tokenMatch[1].trim();
+            // Quick JWT format check (3 dot-separated parts)
+            if (token.split('.').length === 3) {
+              const keycloakResult = await validateKeycloakJWT(token);
+              userId = keycloakResult.userId;
+            }
+          }
         }
+      }
 
-        userId = session.user.id;
+      // If not authenticated via Keycloak, fall through to existing auth methods
+      if (!userId) {
+        // OIDC authentication (CLI)
+        const oidcAuthorization = req.headers.get(LOBE_CHAT_OIDC_AUTH_HEADER);
+        if (oidcAuthorization) {
+          const oidc = await validateOIDCJWT(oidcAuthorization);
+          userId = oidc.userId;
+        } else {
+          // Better Auth session authentication (web)
+          const session = await auth.api.getSession({
+            headers: req.headers,
+          });
+
+          if (!session?.user?.id) {
+            throw AgentRuntimeError.createError(ChatErrorType.Unauthorized);
+          }
+
+          userId = session.user.id;
+        }
       }
     } catch (e) {
       const params = await options.params;
@@ -91,6 +112,11 @@ export const checkAuth =
       const error = errorContent || e;
 
       return createErrorResponse(errorType, { error, ...res, provider: params?.provider });
+    }
+
+    // At this point userId must be set by one of the auth methods above
+    if (!userId) {
+      throw AgentRuntimeError.createError(ChatErrorType.Unauthorized);
     }
 
     const jwtPayload: ClientSecretPayload = { userId };

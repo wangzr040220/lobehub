@@ -57,6 +57,12 @@ declare global {
       AUTH_KEYCLOAK_ISSUER?: string;
 
       AUTH_KEYCLOAK_SECRET?: string;
+
+      // PolyU Keycloak JWT direct authentication
+      POLYU_KEYCLOAK_JWT_ENABLED?: string;
+      POLYU_KEYCLOAK_JWKS_URI?: string;
+      POLYU_KEYCLOAK_ISSUER?: string;
+      POLYU_KEYCLOAK_CLIENT_ID?: string;
       AUTH_LOGTO_ID?: string;
 
       AUTH_LOGTO_ISSUER?: string;
@@ -170,6 +176,12 @@ export const getAuthConfig = () => {
       AUTH_KEYCLOAK_SECRET: z.string().optional(),
       AUTH_KEYCLOAK_ISSUER: z.string().optional(),
 
+      // PolyU Keycloak JWT direct authentication
+      POLYU_KEYCLOAK_JWT_ENABLED: z.boolean().optional().default(false),
+      POLYU_KEYCLOAK_JWKS_URI: z.string().optional(),
+      POLYU_KEYCLOAK_ISSUER: z.string().optional(),
+      POLYU_KEYCLOAK_CLIENT_ID: z.string().optional().default('lobechat'),
+
       AUTH_LOGTO_ID: z.string().optional(),
       AUTH_LOGTO_SECRET: z.string().optional(),
       AUTH_LOGTO_ISSUER: z.string().optional(),
@@ -262,6 +274,12 @@ export const getAuthConfig = () => {
       AUTH_KEYCLOAK_ID: process.env.AUTH_KEYCLOAK_ID,
       AUTH_KEYCLOAK_SECRET: process.env.AUTH_KEYCLOAK_SECRET,
       AUTH_KEYCLOAK_ISSUER: process.env.AUTH_KEYCLOAK_ISSUER,
+
+      // PolyU Keycloak JWT direct authentication
+      POLYU_KEYCLOAK_JWT_ENABLED: process.env.POLYU_KEYCLOAK_JWT_ENABLED === '1',
+      POLYU_KEYCLOAK_JWKS_URI: process.env.POLYU_KEYCLOAK_JWKS_URI,
+      POLYU_KEYCLOAK_ISSUER: process.env.POLYU_KEYCLOAK_ISSUER,
+      POLYU_KEYCLOAK_CLIENT_ID: process.env.POLYU_KEYCLOAK_CLIENT_ID,
 
       AUTH_LOGTO_ID: process.env.AUTH_LOGTO_ID,
       AUTH_LOGTO_SECRET: process.env.AUTH_LOGTO_SECRET,

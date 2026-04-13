@@ -85,6 +85,9 @@ export const getAppConfig = () => {
        */
       enableQueueAgentRuntime: z.boolean().optional(),
       TELEMETRY_DISABLED: z.boolean().optional(),
+
+      // PolyU BFF API configuration
+      POLYU_BFF_API_URL: z.string().optional(),
     },
     runtimeEnv: {
       // Sentry
@@ -124,8 +127,17 @@ export const getAppConfig = () => {
       AGENT_GATEWAY_URL: process.env.AGENT_GATEWAY_URL,
       enableQueueAgentRuntime: process.env.AGENT_RUNTIME_MODE === 'queue',
       TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED === '1',
+
+      // PolyU BFF API URL
+      POLYU_BFF_API_URL: process.env.POLYU_BFF_API_URL,
     },
   });
 };
 
 export const appEnv = getAppConfig();
+
+/**
+ * PolyU BFF API URL for agent discovery and chat
+ * Falls back to /api/bff (relative path, proxied by nginx)
+ */
+export const POLYU_BFF_API_URL = appEnv.POLYU_BFF_API_URL || '/api/bff';
