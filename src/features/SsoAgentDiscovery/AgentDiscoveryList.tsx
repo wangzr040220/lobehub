@@ -4,21 +4,21 @@ import { Empty, Flexbox, Input, Pagination, Select, Spin } from '@lobehub/ui';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { polyuAgentService } from '@/services/polyuAgent';
-import type { PolyuAgent, PolyuAgentListParams } from '@/services/polyuAgent';
+import { SsoAgentService } from '@/services/ssoAgent';
+import type { SsoAgent, SsoAgentListParams } from '@/services/ssoAgent';
 
 import AgentCard from './AgentCard';
 
 /**
- * PolyU Agent Discovery List
+ * SmartAA Agent Discovery List
  *
- * Displays a grid of approved public agents from the PolyU BFF API.
+ * Displays a grid of approved public agents from the SmartAA BFF API.
  * Supports filtering by subject category, department, and keyword search.
  */
 const AgentDiscoveryList = memo(() => {
   const { t } = useTranslation('common');
 
-  const [agents, setAgents] = useState<PolyuAgent[]>([]);
+  const [agents, setAgents] = useState<SsoAgent[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -29,7 +29,7 @@ const AgentDiscoveryList = memo(() => {
 
   // Load categories on mount
   useEffect(() => {
-    polyuAgentService.getAgentCategories().then(setCategories).catch(() => {
+    SsoAgentService.getAgentCategories().then(setCategories).catch(() => {
       // Use default categories on error
       setCategories(['APSS', 'BRE', 'CBS', 'CC', 'CPCE', 'DES', 'EIE', 'FB', 'FH', 'FS', 'HTI']);
     });
@@ -39,7 +39,7 @@ const AgentDiscoveryList = memo(() => {
   const loadAgents = useCallback(async () => {
     setLoading(true);
     try {
-      const params: PolyuAgentListParams = {
+      const params: SsoAgentListParams = {
         page,
         pageSize,
         visibility: 'public',
@@ -47,7 +47,7 @@ const AgentDiscoveryList = memo(() => {
       if (keyword.trim()) params.keyword = keyword.trim();
       if (subjectTag) params.subjectTag = subjectTag;
 
-      const result = await polyuAgentService.listAgents(params);
+      const result = await SsoAgentService.listAgents(params);
       setAgents(result.agents);
       setTotal(result.total);
     } catch (error) {
@@ -76,11 +76,11 @@ const AgentDiscoveryList = memo(() => {
   }, []);
 
   // Handle agent click
-  const handleAgentClick = useCallback((agent: PolyuAgent) => {
+  const handleAgentClick = useCallback((agent: SsoAgent) => {
     // Navigate to chat with this agent
     // This will be connected to LobeChat's routing system
     window.dispatchEvent(
-      new CustomEvent('polyu:start-agent-chat', { detail: { agentId: agent.id, agent } }),
+      new CustomEvent('sso:start-agent-chat', { detail: { agentId: agent.id, agent } }),
     );
   }, []);
 

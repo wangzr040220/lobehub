@@ -4,15 +4,15 @@ import { Collapse, Flexbox, Icon, Text } from '@lobehub/ui';
 import { BookOpen, ExternalLink, FileText } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
-import type { PolyuReference } from '@/services/polyuAgent';
+import type { SsoReference } from '@/services/ssoAgent';
 
 interface ReferenceSourcesProps {
-  references: PolyuReference[];
+  references: SsoReference[];
   title?: string;
 }
 
 /**
- * PolyU Reference Sources Component
+ * SmartAA Reference Sources Component
  *
  * Displays knowledge base reference sources in a collapsible panel.
  * Used in chat messages to show RAG retrieval sources.

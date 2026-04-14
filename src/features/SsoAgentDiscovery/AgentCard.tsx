@@ -6,15 +6,15 @@ import { useTranslation } from 'react-i18next';
 
 import { DEFAULT_AVATAR } from '@/const/meta';
 
-import type { PolyuAgent } from '@/services/polyuAgent';
+import type { SsoAgent } from '@/services/ssoAgent';
 
 interface AgentCardProps {
-  agent: PolyuAgent;
-  onClick?: (agent: PolyuAgent) => void;
+  agent: SsoAgent;
+  onClick?: (agent: SsoAgent) => void;
 }
 
 /**
- * PolyU Agent Card Component
+ * SmartAA Agent Card Component
  *
  * Displays agent information in a card format for the discovery page.
  * Shows name, description, subject tags, call count, and review status.

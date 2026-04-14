@@ -4,7 +4,7 @@ import type { JWTPayload } from 'jose';
 
 import { authEnv } from '@/envs/auth';
 
-const log = debug('polyu-keycloak-jwt');
+const log = debug('sso-keycloak-jwt');
 
 /** Cached remote JWKS key set */
 let cachedRemoteJWKS: any = null;
@@ -12,10 +12,10 @@ let jwksCacheExpiry = 0;
 const JWKS_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 /**
- * Check if PolyU Keycloak JWT authentication is enabled
+ * Check if Keycloak SSO JWT authentication is enabled
  */
-export const isPolyUKeycloakEnabled = (): boolean => {
-  return !!authEnv.POLYU_KEYCLOAK_JWT_ENABLED;
+export const isKeycloakSSOEnabled = (): boolean => {
+  return !!authEnv.KEYCLOAK_SSO_JWT_ENABLED;
 };
 
 /**
@@ -23,9 +23,9 @@ export const isPolyUKeycloakEnabled = (): boolean => {
  * Uses jose's createRemoteJWKSet with caching
  */
 const getRemoteJWKS = async () => {
-  const jwksUri = authEnv.POLYU_KEYCLOAK_JWKS_URI;
+  const jwksUri = authEnv.KEYCLOAK_SSO_JWKS_URI;
   if (!jwksUri) {
-    throw new Error('POLYU_KEYCLOAK_JWKS_URI is not configured');
+    throw new Error('KEYCLOAK_SSO_JWKS_URI is not configured');
   }
 
   // Return cached JWKS if still valid
@@ -43,12 +43,12 @@ const getRemoteJWKS = async () => {
 };
 
 /**
- * Extract PolyU role from Keycloak JWT token
- * Maps Keycloak realm/client roles to PolyU role strings
+ * Extract platform role from Keycloak JWT token
+ * Maps Keycloak realm/client roles to platform role strings
  */
-export const extractPolyURole = (payload: JWTPayload): string => {
+export const extractPlatformRole = (payload: JWTPayload): string => {
   const realmAccess = payload.realm_access as { roles?: string[] } | undefined;
-  const clientId = authEnv.POLYU_KEYCLOAK_CLIENT_ID || 'lobechat';
+  const clientId = authEnv.KEYCLOAK_SSO_CLIENT_ID || 'lobechat';
   const resourceAccess = payload.resource_access?.[clientId] as
     | { roles?: string[] }
     | undefined;
@@ -66,7 +66,7 @@ export const extractPolyURole = (payload: JWTPayload): string => {
 };
 
 /**
- * Validate PolyU Keycloak JWT token
+ * Validate Keycloak SSO JWT token
  * Verifies signature against remote JWKS, checks issuer and client ID
  *
  * @param token - JWT token string from Authorization header
@@ -74,14 +74,14 @@ export const extractPolyURole = (payload: JWTPayload): string => {
  */
 export const validateKeycloakJWT = async (token: string) => {
   try {
-    log('开始验证 PolyU Keycloak JWT token');
+    log('开始验证 Keycloak SSO JWT token');
 
     const remoteJWKS = await getRemoteJWKS();
 
     const { jwtVerify } = await import('jose');
     const { payload } = await jwtVerify(token, remoteJWKS, {
       algorithms: ['RS256'],
-      issuer: authEnv.POLYU_KEYCLOAK_ISSUER || undefined,
+      issuer: authEnv.KEYCLOAK_SSO_ISSUER || undefined,
     });
 
     log('Keycloak JWT 验证成功，payload: %O', payload);
@@ -101,13 +101,13 @@ export const validateKeycloakJWT = async (token: string) => {
       email ||
       userId;
 
-    const polyuRole = extractPolyURole(payload);
+    const SmartAARole = extractPlatformRole(payload);
 
     return {
       email,
       name,
       payload,
-      polyuRole,
+      SmartAARole,
       userId,
     };
   } catch (error) {
@@ -125,12 +125,12 @@ export const validateKeycloakJWT = async (token: string) => {
 };
 
 /**
- * Client-side auth helpers for PolyU Keycloak
+ * Client-side auth helpers for Keycloak SSO
  *
- * These helpers are used by the PolyU BFF API client to obtain
+ * These helpers are used by the SmartAA BFF API client to obtain
  * the current user's access token for authenticated API calls.
  */
-export const polyuAuthHelpers = {
+export const ssoAuthHelpers = {
   /**
    * Get the current access token for BFF API calls.
    * In browser context, reads from the auth session/cookie.
@@ -149,7 +149,7 @@ export const polyuAuthHelpers = {
       }
 
       // Fallback: try session storage
-      const sessionToken = sessionStorage.getItem('polyu-keycloak-token');
+      const sessionToken = sessionStorage.getItem('sso-keycloak-token');
       if (sessionToken) return sessionToken;
     } catch {
       // Ignore storage access errors
@@ -164,7 +164,7 @@ export const polyuAuthHelpers = {
   setAccessToken: async (token: string): Promise<void> => {
     if (typeof window === 'undefined') return;
     try {
-      sessionStorage.setItem('polyu-keycloak-token', token);
+      sessionStorage.setItem('sso-keycloak-token', token);
     } catch {
       // Ignore storage access errors
     }

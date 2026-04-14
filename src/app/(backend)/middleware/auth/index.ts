@@ -10,7 +10,7 @@ import { type LobeChatDatabase } from '@/database/type';
 import { LOBE_CHAT_OIDC_AUTH_HEADER, authEnv } from '@/envs/auth';
 import { extractTraceContext, injectActiveTraceHeaders } from '@/libs/observability/traceparent';
 import { validateOIDCJWT } from '@/libs/oidc-provider/jwt';
-import { isPolyUKeycloakEnabled, validateKeycloakJWT } from '@/libs/oidc-provider/keycloak-jwt';
+import { isKeycloakSSOEnabled, validateKeycloakJWT } from '@/libs/oidc-provider/keycloak-jwt';
 import { createErrorResponse } from '@/utils/errorResponse';
 
 type RequestOptions = { params: Promise<{ provider?: string }> };
@@ -50,9 +50,9 @@ export const checkAuth =
     let userId: string | undefined;
 
     try {
-      // PolyU Keycloak JWT authentication (highest priority)
+      // Keycloak SSO JWT authentication (highest priority)
       // Nginx passes the Keycloak JWT via Authorization header from BFF
-      if (isPolyUKeycloakEnabled()) {
+      if (isKeycloakSSOEnabled()) {
         const authorization = req.headers.get('Authorization');
         if (authorization) {
           const tokenMatch = authorization.match(/^Bearer\s+(.+)$/i);

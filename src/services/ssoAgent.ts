@@ -1,20 +1,20 @@
 /**
- * PolyU BFF Agent API Client
+ * SmartAA BFF Agent API Client
  *
- * This service provides methods to interact with the PolyU BFF API
+ * This service provides methods to interact with the SmartAA BFF API
  * for agent discovery, agent details, and chat functionality.
  *
  * All requests include the Keycloak JWT token for authentication.
  */
 
-import { POLYU_BFF_API_URL } from '@/envs/app';
-import { polyuAuthHelpers } from '@/libs/oidc-provider/keycloak-jwt';
+import { BFF_API_URL } from '@/envs/app';
+import { ssoAuthHelpers } from '@/libs/oidc-provider/keycloak-jwt';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export interface PolyuAgent {
+export interface SsoAgent {
   id: string;
   difyAppId: string;
   name: string;
@@ -34,7 +34,7 @@ export interface PolyuAgent {
   updatedAt: string;
 }
 
-export interface PolyuAgentListParams {
+export interface SsoAgentListParams {
   page?: number;
   pageSize?: number;
   visibility?: string;
@@ -43,20 +43,20 @@ export interface PolyuAgentListParams {
   keyword?: string;
 }
 
-export interface PolyuAgentListResponse {
-  agents: PolyuAgent[];
+export interface SsoAgentListResponse {
+  agents: SsoAgent[];
   total: number;
   page: number;
   pageSize: number;
 }
 
-export interface PolyuChatMessage {
+export interface SsoChatMessage {
   query: string;
   conversationId?: string;
   files?: Array<{ type: string; url: string }>;
 }
 
-export interface PolyuChatEvent {
+export interface SsoChatEvent {
   event: 'message' | 'message_end' | 'error' | 'agent_thought' | 'agent_message';
   answer?: string;
   conversationId?: string;
@@ -64,7 +64,7 @@ export interface PolyuChatEvent {
   metadata?: Record<string, unknown>;
 }
 
-export interface PolyuReference {
+export interface SsoReference {
   id: string;
   knowledgeBaseId: string;
   documentName: string;
@@ -78,7 +78,7 @@ export interface PolyuReference {
 // ---------------------------------------------------------------------------
 
 async function getAuthHeaders(): Promise<HeadersInit> {
-  const token = await polyuAuthHelpers.getAccessToken();
+  const token = await ssoAuthHelpers.getAccessToken();
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -90,7 +90,7 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 // ---------------------------------------------------------------------------
 
 function bffUrl(path: string): string {
-  const base = POLYU_BFF_API_URL || '/api/bff';
+  const base = BFF_API_URL || '/api/bff';
   return `${base}${path}`;
 }
 
@@ -98,11 +98,11 @@ function bffUrl(path: string): string {
 // Agent API
 // ---------------------------------------------------------------------------
 
-class PolyuAgentService {
+class ssoAgentService {
   /**
    * List approved public agents with pagination and filters
    */
-  listAgents = async (params: PolyuAgentListParams = {}): Promise<PolyuAgentListResponse> => {
+  listAgents = async (params: SsoAgentListParams = {}): Promise<SsoAgentListResponse> => {
     const searchParams = new URLSearchParams();
     if (params.page) searchParams.set('page', String(params.page));
     if (params.pageSize) searchParams.set('pageSize', String(params.pageSize));
@@ -121,13 +121,13 @@ class PolyuAgentService {
       throw new Error(`Failed to list agents: ${response.status} ${response.statusText}`);
     }
 
-    return response.json() as Promise<PolyuAgentListResponse>;
+    return response.json() as Promise<SsoAgentListResponse>;
   };
 
   /**
    * Get a single agent by ID
    */
-  getAgent = async (agentId: string): Promise<PolyuAgent> => {
+  getAgent = async (agentId: string): Promise<SsoAgent> => {
     const url = bffUrl(`/agents/${agentId}`);
     const headers = await getAuthHeaders();
 
@@ -137,7 +137,7 @@ class PolyuAgentService {
       throw new Error(`Failed to get agent ${agentId}: ${response.status}`);
     }
 
-    return response.json() as Promise<PolyuAgent>;
+    return response.json() as Promise<SsoAgent>;
   };
 
   /**
@@ -147,7 +147,7 @@ class PolyuAgentService {
    */
   chatWithAgent = async (
     agentId: string,
-    message: PolyuChatMessage,
+    message: SsoChatMessage,
   ): Promise<ReadableStream<Uint8Array>> => {
     const url = bffUrl(`/chat/agents/${agentId}`);
     const headers = await getAuthHeaders();
@@ -181,7 +181,7 @@ class PolyuAgentService {
    */
   parseSSEReader = (
     reader: ReadableStreamDefaultReader<Uint8Array>,
-    onEvent: (event: PolyuChatEvent) => void,
+    onEvent: (event: SsoChatEvent) => void,
     onError?: (error: Error) => void,
     onDone?: () => void,
   ): void => {
@@ -204,7 +204,7 @@ class PolyuAgentService {
             return;
           }
           try {
-            const event = JSON.parse(data) as PolyuChatEvent;
+            const event = JSON.parse(data) as SsoChatEvent;
             onEvent(event);
           } catch {
             // Skip malformed JSON
@@ -265,4 +265,4 @@ class PolyuAgentService {
   };
 }
 
-export const polyuAgentService = new PolyuAgentService();
+export const ssoAgentService = new ssoAgentService();
