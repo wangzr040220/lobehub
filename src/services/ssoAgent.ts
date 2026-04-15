@@ -16,7 +16,7 @@ import { ssoAuthHelpers } from '@/libs/oidc-provider/keycloak-jwt';
 
 export interface SsoAgent {
   id: string;
-  difyAppId: string;
+  ragflowAgentId: string;
   name: string;
   description: string;
   avatarUrl?: string;
