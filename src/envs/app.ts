@@ -85,9 +85,6 @@ export const getAppConfig = () => {
        */
       enableQueueAgentRuntime: z.boolean().optional(),
       TELEMETRY_DISABLED: z.boolean().optional(),
-
-      // SmartAA BFF API configuration
-      BFF_API_URL: z.string().optional(),
     },
     runtimeEnv: {
       // Sentry
@@ -127,9 +124,6 @@ export const getAppConfig = () => {
       AGENT_GATEWAY_URL: process.env.AGENT_GATEWAY_URL,
       enableQueueAgentRuntime: process.env.AGENT_RUNTIME_MODE === 'queue',
       TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED === '1',
-
-      // SmartAA BFF API URL
-      BFF_API_URL: process.env.BFF_API_URL,
     },
   });
 };
@@ -137,7 +131,12 @@ export const getAppConfig = () => {
 export const appEnv = getAppConfig();
 
 /**
- * SmartAA BFF API URL for agent discovery and chat
- * Falls back to /api/bff (relative path, proxied by nginx)
+ * SmartAA BFF API URL for agent discovery and chat.
+ *
+ * Reads from process.env directly — NOT from appEnv — because this value is
+ * consumed by client-side code (ssoAgent.ts).  Accessing a server-only env
+ * via appEnv triggers @t3-oss/env-core's client-side guard.
+ *
+ * Falls back to /api/bff (relative path, proxied by nginx).
  */
-export const BFF_API_URL = appEnv.BFF_API_URL || '/api/bff';
+export const BFF_API_URL = process.env.NEXT_PUBLIC_BFF_API_URL || '/api/bff';

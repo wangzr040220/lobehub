@@ -42,6 +42,7 @@ describe('getAnalyticsConfig', () => {
       DEBUG_VERCEL_ANALYTICS: false,
       ENABLE_GOOGLE_ANALYTICS: true,
       GOOGLE_ANALYTICS_MEASUREMENT_ID: 'ga_id',
+      REACT_SCAN_MONITOR_API_KEY: undefined,
     });
   });
 });

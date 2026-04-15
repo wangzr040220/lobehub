@@ -25,6 +25,7 @@ import {
   getVerificationOTPEmailTemplate,
 } from '@/libs/better-auth/email-templates';
 import { emailWhitelist } from '@/libs/better-auth/plugins/email-whitelist';
+import { keycloakRopcPlugin } from '@/libs/better-auth/plugins/keycloak-ropc';
 import { initBetterAuthSSOProviders } from '@/libs/better-auth/sso';
 import { createSecondaryStorage, getTrustedOrigins } from '@/libs/better-auth/utils/config';
 import { parseSSOProviders } from '@/libs/better-auth/utils/server';
@@ -108,7 +109,7 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
 
     emailAndPassword: {
       autoSignIn: true,
-      disableSignUp: authEnv.AUTH_DISABLE_EMAIL_PASSWORD,
+      disableSignUp: authEnv.AUTH_DISABLE_EMAIL_PASSWORD || authEnv.KEYCLOAK_ROPC_ENABLED,
       enabled: !authEnv.AUTH_DISABLE_EMAIL_PASSWORD,
       maxPasswordLength: 64,
       minPasswordLength: 8,
@@ -118,6 +119,9 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
       password: {
         // New passwords continue to use BetterAuth's default hash to stay consistent with the official configuration.
         async verify({ hash, password }: { hash: string; password: string }): Promise<boolean> {
+          // Keycloak ROPC mode: credentials already validated by Keycloak
+          if (authEnv.KEYCLOAK_ROPC_ENABLED) return true;
+
           if (!hash) return false;
 
           // Compatible with bcrypt hashes exported from Clerk (starting with $2a$ or $2b$)
@@ -261,6 +265,12 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
     },
     plugins: [
       ...customOptions.plugins,
+      keycloakRopcPlugin({
+        enabled: authEnv.KEYCLOAK_ROPC_ENABLED,
+        realmUrl: authEnv.KEYCLOAK_ROPC_REALM_URL ?? '',
+        clientId: authEnv.KEYCLOAK_ROPC_CLIENT_ID ?? '',
+        clientSecret: authEnv.KEYCLOAK_ROPC_CLIENT_SECRET,
+      }),
       emailWhitelist(),
       expo(),
       emailHarmony({ allowNormalizedSignin: false, validator: customEmailValidator }),

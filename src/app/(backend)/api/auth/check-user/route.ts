@@ -25,6 +25,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email is required', exists: false }, { status: 400 });
     }
 
+    // Keycloak ROPC mode: treat all emails as potentially valid
+    // Actual credential validation happens at sign-in via Keycloak Direct Grant
+    if (process.env.KEYCLOAK_ROPC_ENABLED === '1') {
+      return NextResponse.json({ exists: true, hasPassword: true } satisfies CheckUserResponseData);
+    }
+
     // Query database for user with this email
     const [user] = await serverDB
       .select({

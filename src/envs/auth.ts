@@ -63,6 +63,12 @@ declare global {
       KEYCLOAK_SSO_JWKS_URI?: string;
       KEYCLOAK_SSO_ISSUER?: string;
       KEYCLOAK_SSO_CLIENT_ID?: string;
+
+      // Keycloak ROPC (Resource Owner Password Credentials) for direct login
+      KEYCLOAK_ROPC_ENABLED?: string;
+      KEYCLOAK_ROPC_REALM_URL?: string;
+      KEYCLOAK_ROPC_CLIENT_ID?: string;
+      KEYCLOAK_ROPC_CLIENT_SECRET?: string;
       AUTH_LOGTO_ID?: string;
 
       AUTH_LOGTO_ISSUER?: string;
@@ -182,6 +188,12 @@ export const getAuthConfig = () => {
       KEYCLOAK_SSO_ISSUER: z.string().optional(),
       KEYCLOAK_SSO_CLIENT_ID: z.string().optional().default('lobechat'),
 
+      // Keycloak ROPC (Resource Owner Password Credentials) for direct login
+      KEYCLOAK_ROPC_ENABLED: z.boolean().optional().default(false),
+      KEYCLOAK_ROPC_REALM_URL: z.string().optional(),
+      KEYCLOAK_ROPC_CLIENT_ID: z.string().optional(),
+      KEYCLOAK_ROPC_CLIENT_SECRET: z.string().optional(),
+
       AUTH_LOGTO_ID: z.string().optional(),
       AUTH_LOGTO_SECRET: z.string().optional(),
       AUTH_LOGTO_ISSUER: z.string().optional(),
@@ -280,6 +292,12 @@ export const getAuthConfig = () => {
       KEYCLOAK_SSO_JWKS_URI: process.env.KEYCLOAK_SSO_JWKS_URI,
       KEYCLOAK_SSO_ISSUER: process.env.KEYCLOAK_SSO_ISSUER,
       KEYCLOAK_SSO_CLIENT_ID: process.env.KEYCLOAK_SSO_CLIENT_ID,
+
+      // Keycloak ROPC for direct login
+      KEYCLOAK_ROPC_ENABLED: process.env.KEYCLOAK_ROPC_ENABLED === '1',
+      KEYCLOAK_ROPC_REALM_URL: process.env.KEYCLOAK_ROPC_REALM_URL,
+      KEYCLOAK_ROPC_CLIENT_ID: process.env.KEYCLOAK_ROPC_CLIENT_ID,
+      KEYCLOAK_ROPC_CLIENT_SECRET: process.env.KEYCLOAK_ROPC_CLIENT_SECRET,
 
       AUTH_LOGTO_ID: process.env.AUTH_LOGTO_ID,
       AUTH_LOGTO_SECRET: process.env.AUTH_LOGTO_SECRET,
